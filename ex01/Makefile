@@ -1,7 +1,8 @@
-NAME = a.out
+NAME = RPN
 RM	=		rm -f
 CXXFLAGS = -Wall -Werror -Wextra -std=c++98 -Wshadow -pedantic -g
 SOURCES = 	main.cpp					\
+			RPN.cpp
 
 CXX = c++
 OBJ = $(SOURCES:.cpp=.o)

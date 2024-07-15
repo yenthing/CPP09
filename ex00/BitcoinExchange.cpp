@@ -4,7 +4,10 @@ BitcoinExchange::BitcoinExchange() {}
 
 BitcoinExchange::BitcoinExchange(const std::string& dbFile)
 {
-    loadDatabase(dbFile);
+    if (!loadDatabase(dbFile))
+    {
+        throw std::runtime_error("Error: could not open DATA file");
+    }
 }
 
 BitcoinExchange::~BitcoinExchange() {}
@@ -22,12 +25,12 @@ bool BitcoinExchange::isCSVFile(const std::string& filename)
     return filename.size() > 4 && filename.substr(filename.size() - 4) == ".csv";
 }
 
-void BitcoinExchange::loadDatabase(const std::string& dbFile)
+bool BitcoinExchange::loadDatabase(const std::string& dbFile)
 {
     std::ifstream file(dbFile.c_str());
-    if (!file) {
-        std::cerr << "Error: could not open DATA file." << std::endl;
-        return;
+    if (!file)
+    {
+        return false;
     }
     
     std::string line;
@@ -44,6 +47,7 @@ void BitcoinExchange::loadDatabase(const std::string& dbFile)
                 rates[date] = rate;
         }
     }
+    return true;
 }
 
 float BitcoinExchange::getRate(const std::string& date) const
@@ -70,6 +74,15 @@ bool BitcoinExchange::isValidDate(const std::string& date) const
         return false;
     if (month < 1 || month > 12 || day < 1 || day > 31)
         return false;
+    if ((month == 4 || month == 6 || month == 9 || month == 11) && day > 30)
+        return false;
+    if (month == 2)
+    {
+        bool isLeap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+        if (day > 29 || (day == 29 && !isLeap)) {
+            return false;
+        }
+    }
 
     return true;
 }
@@ -81,7 +94,7 @@ bool BitcoinExchange::isValidValue(const std::string& valueStr, float& value) co
     return !(valueStream.fail() || !valueStream.eof());
 }
 
-void trim(std::string& str)
+void cut_space(std::string& str)
 {
     size_t start = str.find_first_not_of(" \t");
     size_t end = str.find_last_not_of(" \t");
@@ -106,8 +119,8 @@ void BitcoinExchange::processFile(const std::string& filename) const
             continue;
         else if (std::getline(ss, date, '|') && std::getline(ss, valueStr))
         {
-            trim(date);
-            trim(valueStr);
+            cut_space(date);
+            cut_space(valueStr);
 
             if (!isValidDate(date))
             {
@@ -138,8 +151,6 @@ void BitcoinExchange::processFile(const std::string& filename) const
             std::cout << date << " => " << value << " = " << (value * rate) << std::endl;
         }
         else
-        {
             std::cerr << "Error: bad input format => " << line << std::endl;
-        }
     }
 }

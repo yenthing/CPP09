@@ -20,8 +20,15 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    BitcoinExchange exchange("data.csv");
-    exchange.processFile(inputFile);
-
+    try
+    {
+        BitcoinExchange exchange("data.csv");
+        exchange.processFile(inputFile);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return 1;
+    }
     return 0;
 }
