@@ -1,22 +1,23 @@
 #include "PmergeMe.hpp"
 #include <iostream>
 #include <vector>
-#include <deque>
+#include <stdexcept>
 #include <sstream>
-#include <ctime>
 
-void printSequence(const std::string& prefix, const std::vector<int>& data)
+void printVector(const std::vector<size_t>& vec)
 {
-    std::cout << prefix;
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        std::cout << data[i];
-        if (i != data.size() - 1)
-        {
-            std::cout << " ";
-        }
+    for (std::vector<size_t>::const_iterator it = vec.begin(); it != vec.end(); ++it) {
+        std::cout << *it << " ";
     }
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl;
+}
+
+void printDeque(const std::deque<size_t>& deq)
+{
+    for (std::deque<size_t>::const_iterator it = deq.begin(); it != deq.end(); ++it) {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -26,7 +27,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::vector<int> data;
+    std::vector<size_t> vectorData;
+    std::deque<size_t> dequeData;
+
     for (int i = 1; i < argc; ++i)
     {
         try
@@ -37,7 +40,8 @@ int main(int argc, char* argv[])
             {
                 throw std::invalid_argument("Non-positive integer.");
             }
-            data.push_back(num);
+            vectorData.push_back(num);
+            dequeData.push_back(num);
         }
         catch (const std::exception& e)
         {
@@ -45,49 +49,36 @@ int main(int argc, char* argv[])
             return 1;
         }
     }
-
-
-
+    
     std::cout << "Before: ";
-    for (std::vector<int>::iterator it = data.begin(); it != data.end(); ++it) {
-        std::cout << *it << " ";
-    }
+    printVector(vectorData);
     std::cout << std::endl;
 
-    PmergeMe sorter(data);
+    PmergeMe pmerge;
 
     clock_t start = clock();
-    sorter.sortwithVector();
+    pmerge.fordJohnsonSortVector(vectorData);
     clock_t end = clock();
     double vectorSortTime = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000000;
 
+    // std::cout << "After (std::vector): ";
+    // printVector(vectorData);
+    // std::cout << std::endl;
 
-    std::cout << "After (std::vector): ";
-    const std::vector<int>& vectorResult = sorter.getVectorData();
-    for (std::vector<int>::const_iterator it = vectorResult.begin(); it != vectorResult.end(); ++it) {
-        std::cout << *it << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "Time to process a range of " << data.size() << " elements with std::vector: " 
-              << vectorSortTime << " us" << std::endl << '\n';
+    std::cout << "Time to process a range of " << vectorData.size() << " elements with std::vector: " 
+              << vectorSortTime << " us" << std::endl << std::endl;
 
     start = clock();
-    sorter.sortwithDeque();
+    pmerge.fordJohnsonSortDeque(dequeData);
     end = clock();
     double dequeSortTime = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000000;
 
-    //std::cout << "After (deque): ";
-    // const std::deque<int>& dequeResult = sorter.getDequeResult();
-    // for (std::deque<int>::const_iterator it = dequeResult.begin(); it != dequeResult.end(); ++it) {
-        // std::cout << *it << " ";
-    // }
-    // std::cout << std::endl << std::endl;
+    std::cout << "After (deque): ";
+    printDeque(dequeData);
+    std::cout << std::endl;
 
-    std::cout << "Time to process a range of " << data.size() << " elements with std::deque: " 
+    std::cout << "Time to process a range of " << dequeData.size() << " elements with std::deque: " 
               << dequeSortTime << " us" << std::endl;
 
     return 0;
 }
-
-

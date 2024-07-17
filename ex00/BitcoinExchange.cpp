@@ -4,7 +4,7 @@ BitcoinExchange::BitcoinExchange() {}
 
 BitcoinExchange::BitcoinExchange(const std::string& dbFile)
 {
-    if (!loadDatabase(dbFile))
+    if (!loadDatabase(dbFile) || rates.empty())
     {
         throw std::runtime_error("Error: could not open DATA file");
     }
@@ -28,7 +28,7 @@ bool BitcoinExchange::isCSVFile(const std::string& filename)
 bool BitcoinExchange::loadDatabase(const std::string& dbFile)
 {
     std::ifstream file(dbFile.c_str());
-    if (!file)
+    if (!file.is_open() || !isCSVFile(dbFile))
     {
         return false;
     }
@@ -47,6 +47,7 @@ bool BitcoinExchange::loadDatabase(const std::string& dbFile)
                 rates[date] = rate;
         }
     }
+    file.close();
     return true;
 }
 
@@ -79,9 +80,8 @@ bool BitcoinExchange::isValidDate(const std::string& date) const
     if (month == 2)
     {
         bool isLeap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-        if (day > 29 || (day == 29 && !isLeap)) {
+        if (day > 29 || (day == 29 && !isLeap))
             return false;
-        }
     }
 
     return true;
@@ -104,17 +104,17 @@ void cut_space(std::string& str)
 void BitcoinExchange::processFile(const std::string& filename) const
 {
     std::ifstream file(filename.c_str());
-    if (!file)
-    {
-        std::cerr << "Error: could not open file." << std::endl;
-        return;
-    }
+    if (!file.is_open())
+        throw std::runtime_error("Error: could not open file.");
 
+    if (file.peek() == std::ifstream::traits_type::eof())
+        throw std::runtime_error("Error: File is empty.");
     std::string line;
     while (std::getline(file, line))
-    {
+    { 
         std::istringstream ss(line);
         std::string date, valueStr;
+        
         if (line == "date | value")
             continue;
         else if (std::getline(ss, date, '|') && std::getline(ss, valueStr))
@@ -153,4 +153,5 @@ void BitcoinExchange::processFile(const std::string& filename) const
         else
             std::cerr << "Error: bad input format => " << line << std::endl;
     }
+    file.close();
 }
